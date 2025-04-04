@@ -590,14 +590,18 @@ abstract class BaseAudioPlayer internal constructor(
         if (!playerConfig.handleAudioFocus) {
             if (isPermanent) abandonAudioFocusIfHeld()
 
-            val isDucking = focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK
-                    && !playerOptions.alwaysPauseOnInterruption
-            if (isDucking) {
-                volumeMultiplier = 0.5f
-                wasDucking = true
-            } else if (wasDucking) {
-                volumeMultiplier = 1f
-                wasDucking = false
+            when (focusChange) {
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                    if (!playerOptions.alwaysPauseOnInterruption) {
+                        volumeMultiplier = 0.5f
+                        wasDucking = true
+                    }
+                }
+                AudioManager.AUDIOFOCUS_GAIN, AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                    // Always restore volume on focus gain or even when losing focus
+                    volumeMultiplier = 1f
+                    wasDucking = false
+                }
             }
         }
 
