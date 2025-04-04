@@ -541,7 +541,15 @@ abstract class BaseAudioPlayer internal constructor(
             .setAudioAttributes(
                 AudioAttributesCompat.Builder()
                     .setUsage(USAGE_MEDIA)
-                    .setContentType(CONTENT_TYPE_MUSIC)
+                    .setContentType(
+                        when (playerConfig.audioContentType) {
+                            AudioContentType.MUSIC -> C.AUDIO_CONTENT_TYPE_MUSIC
+                            AudioContentType.SPEECH -> C.AUDIO_CONTENT_TYPE_SPEECH
+                            AudioContentType.SONIFICATION -> C.AUDIO_CONTENT_TYPE_SONIFICATION
+                            AudioContentType.MOVIE -> C.AUDIO_CONTENT_TYPE_MOVIE
+                            AudioContentType.UNKNOWN -> C.AUDIO_CONTENT_TYPE_UNKNOWN
+                        }
+                    )
                     .build()
             )
             .setWillPauseWhenDucked(playerOptions.alwaysPauseOnInterruption)
