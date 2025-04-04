@@ -580,27 +580,35 @@ abstract class BaseAudioPlayer internal constructor(
     }
 
     override fun onAudioFocusChange(focusChange: Int) {
-        Timber.d("Audio focus changed")
+        Timber.d("Audio focus changed: $focusChange")
         val isPermanent = focusChange == AUDIOFOCUS_LOSS
         val isPaused = when (focusChange) {
             AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> true
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> playerOptions.alwaysPauseOnInterruption
             else -> false
         }
-        if (!playerConfig.handleAudioFocus) {
-            if (isPermanent) abandonAudioFocusIfHeld()
 
+        if (!playerConfig.handleAudioFocus) {
             when (focusChange) {
                 AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
                     if (!playerOptions.alwaysPauseOnInterruption) {
+                        Timber.d("Ducking volume")
                         volumeMultiplier = 0.5f
                         wasDucking = true
                     }
                 }
-                AudioManager.AUDIOFOCUS_GAIN, AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                    // Always restore volume on focus gain or even when losing focus
+                AudioManager.AUDIOFOCUS_GAIN -> {
+                    Timber.d("Gained focus, restoring volume")
                     volumeMultiplier = 1f
                     wasDucking = false
+                }
+                AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                    Timber.d("Lost focus, restoring volume before abandoning")
+                    volumeMultiplier = 1f
+                    wasDucking = false
+                    if (isPermanent) {
+                        abandonAudioFocusIfHeld()
+                    }
                 }
             }
         }
