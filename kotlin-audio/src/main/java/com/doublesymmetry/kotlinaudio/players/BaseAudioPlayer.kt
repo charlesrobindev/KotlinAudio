@@ -396,6 +396,7 @@ abstract class BaseAudioPlayer internal constructor(
     }
 
     fun pause() {
+        abandonAudioFocusIfHeld()
         exoPlayer.pause()
     }
 
@@ -406,6 +407,7 @@ abstract class BaseAudioPlayer internal constructor(
      */
     @CallSuper
     open fun stop() {
+        abandonAudioFocusIfHeld()
         playerState = AudioPlayerState.STOPPED
         exoPlayer.playWhenReady = false
         exoPlayer.stop()
@@ -623,24 +625,6 @@ abstract class BaseAudioPlayer internal constructor(
         }
 
         playerEventHolder.updateOnAudioFocusChanged(isPaused, isPermanent)
-    }
-
-    override fun stop() {
-        Timber.d("Stopping playback and abandoning focus")
-        abandonAudioFocusIfHeld()
-        super.stop()
-    }
-    
-    override fun pause() {
-        Timber.d("Pausing playback and abandoning focus")
-        abandonAudioFocusIfHeld()
-        super.pause()
-    }
-    
-    override fun release() {
-        Timber.d("Releasing player and abandoning focus")
-        abandonAudioFocusIfHeld()
-        super.release()
     }
 
     companion object {
