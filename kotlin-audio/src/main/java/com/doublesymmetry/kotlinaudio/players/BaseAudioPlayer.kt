@@ -567,16 +567,25 @@ abstract class BaseAudioPlayer internal constructor(
     private fun abandonAudioFocusIfHeld() {
         if (!hasAudioFocus) return
         Timber.d("Abandoning audio focus...")
-
+    
         val manager = ContextCompat.getSystemService(context, AudioManager::class.java)
-
+    
         val result: Int = if (manager != null && focus != null) {
             AudioManagerCompat.abandonAudioFocusRequest(manager, focus!!)
         } else {
             AudioManager.AUDIOFOCUS_REQUEST_FAILED
         }
-
+    
+        // If abandoning was successful (AUDIOFOCUS_REQUEST_GRANTED), set hasAudioFocus to false
         hasAudioFocus = (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
+        
+        // Make sure to restore volume multiplier when abandoning focus
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            volumeMultiplier = 1f
+            wasDucking = false
+        }
+    
+        Timber.d("Abandon audio focus result: $result, hasAudioFocus: $hasAudioFocus")
     }
 
     override fun onAudioFocusChange(focusChange: Int) {
@@ -614,6 +623,24 @@ abstract class BaseAudioPlayer internal constructor(
         }
 
         playerEventHolder.updateOnAudioFocusChanged(isPaused, isPermanent)
+    }
+
+    override fun stop() {
+        Timber.d("Stopping playback and abandoning focus")
+        abandonAudioFocusIfHeld()
+        super.stop()
+    }
+    
+    override fun pause() {
+        Timber.d("Pausing playback and abandoning focus")
+        abandonAudioFocusIfHeld()
+        super.pause()
+    }
+    
+    override fun release() {
+        Timber.d("Releasing player and abandoning focus")
+        abandonAudioFocusIfHeld()
+        super.release()
     }
 
     companion object {
